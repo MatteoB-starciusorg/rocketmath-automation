@@ -1,4 +1,3 @@
-# rocketmath-automation
 # 🚀 Rocket Math Automation Extension
 
 A Chrome Extension (Manifest V3) that automates solving "Equivalent Fractions" levels on [play.rocketmath.com](https://play.rocketmath.com) by reading game data directly from the DOM.
@@ -46,6 +45,9 @@ A Chrome Extension (Manifest V3) that automates solving "Equivalent Fractions" l
 ## Technical Details
 
 ### File Structure
+
+```
+Rocketmath automation thing/
 ├── manifest.json          # Extension configuration (Manifest V3)
 ├── popup.html            # Popup UI (Vanilla HTML)
 ├── popup.js              # Popup controller logic
@@ -57,6 +59,7 @@ A Chrome Extension (Manifest V3) that automates solving "Equivalent Fractions" l
 ├── icon48.png            # 48x48 icon
 ├── icon128.png           # 128x128 icon
 └── README.md             # This file
+```
 
 ### Permissions
 
@@ -74,8 +77,13 @@ A Chrome Extension (Manifest V3) that automates solving "Equivalent Fractions" l
 
 ⚠️ **Use at your own risk**: This bot automates gameplay. Extensive use of automation may be detectable by the site and could potentially violate their terms of service.
 
+## License
+
+MIT License - Feel free to modify and use as needed!
+
 ## Credits
 
 -   Built with Chrome Extension Manifest V3
 -   Math logic powered by [Fraction.js](https://github.com/infusion/Fraction.js/)
 -   Iconography generated for Rocket Math branding.
+

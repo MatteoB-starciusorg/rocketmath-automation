@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rocket Math Bot</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🚀 Rocket Math Bot</h1>
+      <div id="statusBadge" class="status-badge status-stopped">Stopped</div>
+    </div>
+
+    <div class="content">
+      <button id="toggleBtn" class="toggle-btn btn-start">
+        Start Bot
+      </button>
+
+      <div id="lastAnswerSection" class="info-section" style="display:none;">
+        <p class="info-text">Last Answer: <strong id="lastAnswer"></strong></p>
+      </div>
+
+      <div id="errorSection" class="info-section" style="display:none;">
+        <p class="error-text" id="errorMessage"></p>
+      </div>
+
+      <div class="log-section">
+        <p class="log-label">Activity Log:</p>
+        <div id="logArea" class="log-area"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+
+</html>
