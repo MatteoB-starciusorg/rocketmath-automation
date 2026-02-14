@@ -51,7 +51,7 @@ Rocketmath automation thing/
 ├── manifest.json          # Extension configuration (Manifest V3)
 ├── popup.html            # Popup UI (Vanilla HTML)
 ├── popup.js              # Popup controller logic
-├── styles.css            # Modern CSS styling (Glassmorphism)
+├── styles.css            # Modern CSS styling 
 ├── content.js            # Main automation script (DOM logic)
 ├── background.js         # Service worker for state handling
 ├── fraction.min.js       # Mathematical utility library
@@ -86,4 +86,5 @@ MIT License - Feel free to modify and use as needed!
 -   Built with Chrome Extension Manifest V3
 -   Math logic powered by [Fraction.js](https://github.com/infusion/Fraction.js/)
 -   Iconography generated for Rocket Math branding.
+
 
