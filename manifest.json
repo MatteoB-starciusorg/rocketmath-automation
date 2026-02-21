@@ -1,14 +1,16 @@
 {
     "manifest_version": 3,
     "name": "Rocket Math Automation",
-    "version": "2.0.0",
-    "description": "Automates Equivalent Fractions levels on Rocket Math",
+    "version": "3.6.0",
+    "description": "Automates Equivalent Fractions and Factors & Primes levels on Rocket Math",
     "permissions": [
         "activeTab",
-        "storage"
+        "storage",
+        "scripting"
     ],
     "host_permissions": [
-        "https://play.rocketmath.com/*"
+        "https://play.rocketmath.com/*",
+        "https://admin.rocketmath.com/*"
     ],
     "action": {
         "default_popup": "popup.html",
@@ -28,9 +30,22 @@
             ],
             "js": [
                 "fraction.min.js",
+                "solvers/equivalent-fractions/solver.js",
+                "solvers/factors-primes/solver.js",
                 "content.js"
             ],
             "run_at": "document_idle"
+        }
+    ],
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "factors_100.json",
+                "injected.js"
+            ],
+            "matches": [
+                "https://play.rocketmath.com/*"
+            ]
         }
     ],
     "icons": {

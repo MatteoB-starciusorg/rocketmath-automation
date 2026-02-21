@@ -1,21 +1,28 @@
 # 🚀 Rocket Math Automation Extension
 
-A Chrome Extension (Manifest V3) that automates solving "Equivalent Fractions" levels on [play.rocketmath.com](https://play.rocketmath.com) by reading game data directly from the DOM.
+A Chrome Extension (Manifest V3) that automates solving math problems on [play.rocketmath.com](https://play.rocketmath.com) by reading game data directly from the DOM.
+
+## Supported Problem Types
+
+- ✅ **Equivalent Fractions** - Simplifies fractions to lowest terms
+- ✅ **Factors & Primes** - Finds factor pairs for numbers 1-100
 
 ## Features
 
-- ✅ **DOM-Based Solving**: Reads fraction problems directly from the page elements (no Vision API required).
-- 🧮 **Fraction Logic**: Uses `fraction.min.js` for robust arithmetic and automatic fraction simplification.
-- ⌨️ **Keyboard Simulation**: Simulates mouse events on the game's on-screen keyboard to input answers.
-- ⚡ **High Performance**: Polling every 700ms for rapid response times.
-- 🔄 **Auto-Resume**: Remembers your bot state across page refreshes.
-- 🎨 **Modern UI**: Sleek, glassmorphism-inspired popup with real-time activity logs.
+- **DOM-Based Solving**: Reads problems directly from the page elements (no Vision API required)
+- **Modular Architecture**: Separate solver modules for each problem type
+- **Fraction Logic**: Uses `fraction.min.js` for robust arithmetic and automatic fraction simplification
+- **Pre-computed Factors**: Uses `factors_100.json` for instant factor lookups
+- **Keyboard Simulation**: Simulates mouse events on the game's on-screen keyboard to input answers
+- **High Performance**: Checks every 700ms for rapid response times
+- **Race Mode**: Optional delay before typing with manual Enter confirmation
+- **Auto-Resume**: Remembers your bot state across page refreshes
 
 ## Installation
 
 1.  **Download the Extension**: Ensure you have all the project files in a folder.
-2.  **Open Extensions Page**: Navigate to `chrome://extensions/` in your browser.
-3.  **Enable Developer Mode**: Toggle the "Developer mode" switch in the top-right corner.
+2.  **Open Extensions Page**: Navigate to `chrome://extensions/` or your extensions page in your browser.
+3.  **Enable Developer Mode**: Toggle the "Developer mode" switch in the top-right corner (or were it is in your browser).
 4.  **Load Unpacked**: Click the **Load unpacked** button.
 5.  **Select Directory**: Choose the folder containing this project: `Rocketmath automation thing`
 6.  **Pin Extension**: Click the puzzle icon in Chrome and pin "Rocket Math Bot" for easy access.
@@ -25,10 +32,12 @@ A Chrome Extension (Manifest V3) that automates solving "Equivalent Fractions" l
 ### Running the Bot
 
 1.  Navigate to [https://play.rocketmath.com](https://play.rocketmath.com)
-2.  Start an "Equivalent Fractions" level.
-3.  Click the extension icon in your toolbar.
-4.  Click **Start Bot**.
-5.  The bot will automatically read the fractions, simplify them, and click the numbers on the on-screen keypad.
+2.  Start a level (Equivalent Fractions or Factors & Primes)
+3.  Click the extension icon in your toolbar
+4.  **Select the Mode**: Choose "Equivalent Fractions" or "Factors & Primes"
+5.  (Optional) Enable **Race Mode** for a more human-like delay
+6.  Click **Start Bot**
+7.  The bot will automatically solve problems for the selected mode
 
 ### Stopping the Bot
 
@@ -36,29 +45,36 @@ A Chrome Extension (Manifest V3) that automates solving "Equivalent Fractions" l
 
 ## How It Works
 
-1.  **DOM Inspection**: The extension monitors the page for the `playing-screen` and specifically the `.problem-details-equivalent-fractions` container.
-2.  **Data Extraction**: It reads the numerator and denominator from the game elements.
-3.  **Simplification**: It uses the `Fraction.js` library to find the simplest form of the displayed fraction.
-4.  **Keypad Simulation**: It triggers `mousedown`, `mouseup`, and `click` events on the specific on-screen buttons (e.g., `#number_5`, `#enter`) to mimic human input.
-5.  **State Management**: Uses `chrome.storage.local` to track if the bot should be running, allowing it to survive tab reloads.
+1.  **DOM Inspection**: The extension monitors the page for the `playing-screen` element
+2.  **Problem Detection**: Checks for problem type containers (`.problem-details-equivalent-fractions` or `.problem-details-factors-primes`)
+3.  **Data Extraction**: Reads problem data from the appropriate DOM elements
+4.  **Solution Calculation**:
+    - **Equivalent Fractions**: Uses `Fraction.js` library to simplify fractions
+    - **Factors & Primes**: Looks up factor pairs from pre-computed `factors_100.json`
+5.  **Keypad Simulation**: Triggers `mousedown`, `mouseup`, and `click` events on the on-screen buttons
+6.  **State Management**: Uses `chrome.storage.local` to track bot state across page reloads
 
 ## Technical Details
 
 ### File Structure
 
 ```
-Rocketmath automation thing/
-├── manifest.json          # Extension configuration (Manifest V3)
-├── popup.html            # Popup UI (Vanilla HTML)
-├── popup.js              # Popup controller logic
-├── styles.css            # Modern CSS styling 
-├── content.js            # Main automation script (DOM logic)
-├── background.js         # Service worker for state handling
-├── fraction.min.js       # Mathematical utility library
-├── icon16.png            # 16x16 icon
-├── icon48.png            # 48x48 icon
-├── icon128.png           # 128x128 icon
-└── README.md             # This file
+rocketmath-automation/
+├── manifest.json                              # Extension configuration (Manifest V3)
+├── popup.html                                 # Popup UI
+├── popup.js                                   # Popup controller logic
+├── styles.css                                 # Modern CSS styling
+├── content.js                                 # Main orchestrator script
+├── background.js                              # Service worker for state handling
+├── fraction.min.js                            # Fraction arithmetic library
+├── factors_100.json                           # Pre-computed factors for 1-100
+├── solvers/
+│   ├── equivalent-fractions/
+│   │   └── solver.js                          # Equivalent fractions solver
+│   └── factors-primes/
+│       └── solver.js                          # Factors & primes solver
+├── icon16.png, icon48.png, icon128.png        # Extension icons
+└── README.md                                  # This file
 ```
 
 ### Permissions
@@ -69,9 +85,10 @@ Rocketmath automation thing/
 
 ## Troubleshooting
 
--   **Bot Not Starting**: Ensure you are on an active "Equivalent Fractions" level.
--   **Wrong Answers**: The bot simplifies fractions to their lowest terms (e.g., 2/4 becomes 1/2). Ensure the game expects simplified fractions at your current level.
--   **Button Not Found**: If the game UI changes, the selectors in `content.js` might need updating.
+-   **Bot Not Starting**: Ensure you are on an active "Equivalent Fractions" or "Factors & Primes" level
+-   **Wrong Answers (Fractions)**: The bot simplifies fractions to their lowest terms (e.g., 2/4 becomes 1/2)
+-   **Wrong Answers (Factors)**: The bot uses pre-computed data for numbers 1-100. Numbers outside this range are not supported
+-   **Button Not Found**: If the game UI changes, the selectors in the solver modules might need updating
 
 ## Safety & Disclaimer
 
@@ -79,12 +96,12 @@ Rocketmath automation thing/
 
 ## License
 
-MIT License - Feel free to modify and use as needed!
+Apache License 2.0 - (look at the LICENSE file for more info)
 
 ## Credits
 
 -   Built with Chrome Extension Manifest V3
--   Math logic powered by [Fraction.js](https://github.com/infusion/Fraction.js/)
+-   Math logic powered by [Fraction.js](https://github.com/infusion/Fraction.js/), which is made by https://raw.org/
 -   Iconography generated for Rocket Math branding.
 
 
