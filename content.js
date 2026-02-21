@@ -1,8 +1,9 @@
 // Content script for Rocket Math automation
-// Uses Fraction.js for robust fraction arithmetic & simplification.
-// The game is DOM-based: reads fractions from elements and clicks the on-screen keyboard.
+// Main orchestrator that coordinates different problem solvers
 
 let isRunning = false;
+let raceMode = false;
+let currentMode = null; // 'equivalent-fractions' or 'factors-primes'
 let automationTimer = null;
 let processing = false;
 
@@ -10,7 +11,13 @@ let processing = false;
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'start') {
         isRunning = true;
-        log('Bot started');
+        raceMode = !!request.raceMode;
+        currentMode = request.mode;
+
+        const modeLabel = currentMode === 'equivalent-fractions' ? 'Fractions'
+            : currentMode === 'factors-primes' ? 'Factors' : 'Unknown';
+
+        log(`Bot started: ${modeLabel} Mode` + (raceMode ? ' (Race Mode 🏁)' : ''));
         startAutomation();
         sendResponse({ success: true });
     } else if (request.action === 'stop') {
@@ -18,6 +25,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         stopAutomation();
         log('Bot stopped');
         sendResponse({ success: true });
+    } else if (request.action === 'toggleSkipAnim') {
+        toggleAnimationSkipper(request.enabled);
+    } else if (request.action === 'toggleFreezeTimer') {
+        toggleTimerFreeze(request.enabled);
     }
     return true;
 });
@@ -52,95 +63,29 @@ async function runCycle() {
             return;
         }
 
-        const eqSection = document.querySelector('.problem-details-equivalent-fractions');
-        if (!eqSection || eqSection.classList.contains('custom-hide')) {
-            processing = false;
-            return;
-        }
-
-        const numEl = document.querySelector('.equivalent-problem-0');
-        const denomEl = document.querySelector('.equivalent-problem-1');
-        if (!numEl || !denomEl) {
-            processing = false;
-            return;
-        }
-
-        const numText = numEl.textContent.trim();
-        const denomText = denomEl.textContent.trim();
-        if (!numText || !denomText) {
-            processing = false;
-            return;
-        }
-
-        const num = parseInt(numText, 10);
-        const denom = parseInt(denomText, 10);
-        if (isNaN(num) || isNaN(denom) || denom === 0) {
-            processing = false;
-            return;
-        }
-
-        const frac = new Fraction(num, denom);
-        const simplifiedNum = Number(frac.n);
-        const simplifiedDenom = Number(frac.d);
-
-        const ans0El = document.querySelector('.equivalent-answer-0');
-        const ans1El = document.querySelector('.equivalent-answer-1');
-        if (!ans0El || !ans1El) {
-            processing = false;
-            return;
-        }
-
-        const ans0Text = ans0El.textContent.trim();
-        const ans1Text = ans1El.textContent.trim();
-
-        if (ans0Text && ans1Text) {
-            await clickButton('#enter');
-            processing = false;
-            return;
-        }
-
-        log(`🚀 Solving: ${num}/${denom} → ${simplifiedNum}/${simplifiedDenom}`);
-
-        // Typing sequence: Numerator -> Denominator -> Enter
-        // Usually typing the numerator automatically shifts focus
-
-        // 1. Type Numerator if not already there
-        if (!ans0Text) {
-            const nDigits = String(simplifiedNum);
-            for (const digit of nDigits) {
-                await clickButton(`#number_${digit}`);
-                await delay(40);
+        // Only run the solver corresponding to the selected mode
+        if (currentMode === 'equivalent-fractions') {
+            if (await solveEquivalentFractions(raceMode)) {
+                processing = false;
+                return;
             }
-            await delay(60);
-        }
-
-        // 2. Type Denominator if not already there
-        const currentAns1 = document.querySelector('.equivalent-answer-1')?.textContent.trim();
-        if (!currentAns1) {
-            const dDigits = String(simplifiedDenom);
-            for (const digit of dDigits) {
-                await clickButton(`#number_${digit}`);
-                await delay(40);
+        } else if (currentMode === 'factors-primes') {
+            if (await solveFactorsPrimes(raceMode)) {
+                processing = false;
+                return;
             }
-            await delay(60);
         }
 
-        // 3. Final Enter
-        await clickButton('#enter');
-        log(`✅ Submitted: ${simplifiedNum}/${simplifiedDenom}`);
-
-        try {
-            chrome.runtime.sendMessage({ action: 'updateAnswer', answer: `${simplifiedNum}/${simplifiedDenom}` });
-        } catch (_) { }
+        // No matching problem found for current mode
+        processing = false;
 
     } catch (err) {
         log('❌ ' + err.message);
-    } finally {
         processing = false;
     }
 }
 
-// ── click a keyboard button ───────────────────────────────
+// ── input simulation ──────────────────────────────────────
 function clickButton(selector) {
     return new Promise((resolve) => {
         const btn = document.querySelector(selector);
@@ -149,10 +94,32 @@ function clickButton(selector) {
             btn.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
             btn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
         } else {
-            log(`⚠ Button not found: ${selector}`);
+            console.warn(`[RocketBot] Button not found: ${selector}`);
         }
         setTimeout(resolve, 30);
     });
+}
+
+/**
+ * Simulates a physical keyboard key press
+ * @param {string} key - The key to press (e.g., '1', 'Enter', 'Backspace')
+ */
+function simulateKeyPress(key) {
+    const eventParams = {
+        key: key,
+        code: isNaN(key) ? key : `Digit${key}`,
+        keyCode: isNaN(key) ? (key === 'Enter' ? 13 : 8) : 48 + parseInt(key),
+        which: isNaN(key) ? (key === 'Enter' ? 13 : 8) : 48 + parseInt(key),
+        bubbles: true,
+        cancelable: true
+    };
+
+    const target = document.activeElement || document.body;
+    target.dispatchEvent(new KeyboardEvent('keydown', eventParams));
+    target.dispatchEvent(new KeyboardEvent('keypress', eventParams));
+    setTimeout(() => {
+        target.dispatchEvent(new KeyboardEvent('keyup', eventParams));
+    }, 20);
 }
 
 function delay(ms) {
@@ -160,12 +127,74 @@ function delay(ms) {
 }
 
 // ── auto-resume ───────────────────────────────────────────
-chrome.storage.local.get(['isRunning'], (r) => {
-    if (r.isRunning) {
+chrome.storage.local.get(['isRunning', 'raceMode', 'botMode', 'skipAnim', 'freezeTimer'], (r) => {
+    if (r.isRunning && r.botMode) {
         isRunning = true;
-        log('🔄 Resuming from previous session');
+        raceMode = !!r.raceMode;
+        currentMode = r.botMode;
+
+        const modeLabel = currentMode === 'equivalent-fractions' ? 'Fractions'
+            : currentMode === 'factors-primes' ? 'Factors' : 'Unknown';
+
+        log(`🔄 Resuming: ${modeLabel} Mode` + (raceMode ? ' (Race Mode 🏁)' : ''));
         startAutomation();
     }
+    // Apply persistent cheats
+    if (r.skipAnim) toggleAnimationSkipper(true);
+    if (r.freezeTimer) toggleTimerFreeze(true);
 });
+
+// ── Animation Skipper ──────────────────────────────────────
+function toggleAnimationSkipper(enabled) {
+    const styleId = 'rmse-skip-anim';
+    let style = document.getElementById(styleId);
+
+    if (enabled) {
+        if (!style) {
+            style = document.createElement('style');
+            style.id = styleId;
+            style.textContent = `
+                * {
+                    transition: none !important;
+                    animation: none !important;
+                }
+            `;
+            document.head.appendChild(style);
+            log('⚡ Animation Skipper ENABLED');
+        }
+    } else {
+        if (style) {
+            style.remove();
+            log('⚡ Animation Skipper DISABLED');
+        }
+    }
+}
+
+// ── Timer Freeze ───────────────────────────────────────────
+function toggleTimerFreeze(enabled) {
+    // We can't easily remove the script once injected, but we can toggle functionality via window property
+    // Check if script is already injected
+    if (!document.getElementById('rmse-timer-freeze')) {
+        injectTimerFreezeScript();
+    }
+
+    // Send event to page context
+    window.postMessage({ type: 'RMSE_FREEZE_TIMER', enabled: enabled }, '*');
+    log(enabled ? '❄️ Timer Freeze ENABLED' : '❄️ Timer Freeze DISABLED');
+}
+
+function injectTimerFreezeScript() {
+    // Prevent multiple injections
+    if (document.getElementById('rmse-timer-freeze')) return;
+
+    const script = document.createElement('script');
+    script.id = 'rmse-timer-freeze';
+    script.src = chrome.runtime.getURL('injected.js');
+    script.onload = function () {
+        this.remove(); // Clean up the tag, the code remains in memory
+    };
+    (document.head || document.documentElement).appendChild(script);
+    log('💉 Injected freeze script');
+}
 
 log('🎮 Content script loaded (Fraction.js v' + (typeof Fraction !== 'undefined' ? 'OK' : 'MISSING') + ')');
