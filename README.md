@@ -68,11 +68,8 @@ rocketmath-automation/
 ├── background.js                              # Service worker for state handling
 ├── fraction.min.js                            # Fraction arithmetic library
 ├── factors_100.json                           # Pre-computed factors for 1-100
-├── solvers/
-│   ├── equivalent-fractions/
-│   │   └── solver.js                          # Equivalent fractions solver
-│   └── factors-primes/
-│       └── solver.js                          # Factors & primes solver
+├── fractions-solver.js                        # Equivalent fractions solver
+├── factors-solver.js                          # Factors & primes solver
 ├── icon16.png, icon48.png, icon128.png        # Extension icons
 └── README.md                                  # This file
 ```

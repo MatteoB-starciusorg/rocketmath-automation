@@ -30,8 +30,8 @@
             ],
             "js": [
                 "fraction.min.js",
-                "solvers/equivalent-fractions/solver.js",
-                "solvers/factors-primes/solver.js",
+                "fractions-solver.js",
+                "factors-solver.js",
                 "content.js"
             ],
             "run_at": "document_idle"
