@@ -6,6 +6,7 @@ let raceMode = false;
 let currentMode = null; // 'equivalent-fractions' or 'factors-primes'
 let automationTimer = null;
 let processing = false;
+let sessionCompletedSoundCount = 0;
 
 // ── messaging ─────────────────────────────────────────────
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -18,6 +19,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             : currentMode === 'factors-primes' ? 'Factors' : 'Unknown';
 
         log(`Bot started: ${modeLabel} Mode` + (raceMode ? ' (Race Mode 🏁)' : ''));
+        sessionCompletedSoundCount = 0;
         startAutomation();
         sendResponse({ success: true });
     } else if (request.action === 'stop') {
@@ -59,9 +61,12 @@ async function runCycle() {
     try {
         const playingScreen = document.querySelector('playing-screen');
         if (!playingScreen || playingScreen.classList.contains('hidden') || playingScreen.style.display === 'none') {
+            checkSessionComplete();
             processing = false;
             return;
         }
+
+        sessionCompletedSoundCount = 0; // Reset if we are on the playing screen
 
         // Only run the solver corresponding to the selected mode
         if (currentMode === 'equivalent-fractions') {
@@ -137,12 +142,37 @@ chrome.storage.local.get(['isRunning', 'raceMode', 'botMode', 'skipAnim', 'freez
             : currentMode === 'factors-primes' ? 'Factors' : 'Unknown';
 
         log(`🔄 Resuming: ${modeLabel} Mode` + (raceMode ? ' (Race Mode 🏁)' : ''));
+        sessionCompletedSoundCount = 0;
         startAutomation();
     }
     // Apply persistent cheats
     if (r.skipAnim) toggleAnimationSkipper(true);
     if (r.freezeTimer) toggleTimerFreeze(true);
 });
+
+// ── Session Completion Sound ──────────────────────────────
+async function checkSessionComplete() {
+    if (!isRunning) return;
+
+    const sessionCompletedScreen = document.querySelector('session-completed');
+    if (sessionCompletedScreen && !sessionCompletedScreen.classList.contains('hidden') && sessionCompletedScreen.style.display !== 'none') {
+        if (sessionCompletedSoundCount < 3) {
+            playSessionCompleteSound();
+            sessionCompletedSoundCount++;
+            log(`🔔 Played Session Complete sound (${sessionCompletedSoundCount}/3)`);
+        }
+    }
+}
+
+function playSessionCompleteSound() {
+    try {
+        const audio = new Audio(chrome.runtime.getURL('ur_done.mp3'));
+        audio.volume = 1.0;
+        audio.play();
+    } catch (err) {
+        log('❌ Error playing sound: ' + err.message);
+    }
+}
 
 // ── Animation Skipper ──────────────────────────────────────
 function toggleAnimationSkipper(enabled) {
