@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Rocket Math Automation",
-    "version": "3.6.0",
+    "version": "3.7.0",
     "description": "Automates Equivalent Fractions and Factors & Primes levels on Rocket Math",
     "permissions": [
         "activeTab",
@@ -41,7 +41,8 @@
         {
             "resources": [
                 "factors_100.json",
-                "injected.js"
+                "injected.js",
+                "ur_done.mp3"
             ],
             "matches": [
                 "https://play.rocketmath.com/*"
